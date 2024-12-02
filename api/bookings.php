@@ -48,7 +48,7 @@ if ($method == 'POST') {
             http_response_code(201);
             echo json_encode(array("message" => "Booking was created."));
         } else {
-            error_log("Failed to create booking"); // Debugging
+            error_log("Failed to create booking: " . $stmt->errorInfo()[2]); // Debugging
             http_response_code(503);
             echo json_encode(array("message" => "Unable to create booking."));
         }
@@ -58,7 +58,16 @@ if ($method == 'POST') {
         echo json_encode(array("message" => "Unable to create booking. Data is incomplete."));
     }
 } elseif ($method == 'GET') {
-    $stmt = $booking->read();
+    if (isset($_GET['user_id'])) {
+        $booking->user_id = $_GET['user_id'];
+        $stmt = $booking->readByUser();
+    } elseif (isset($_GET['place_id'])) {
+        $booking->place_id = $_GET['place_id'];
+        $stmt = $booking->readByPlace();
+    } else {
+        $stmt = $booking->readAll();
+    }
+
     $num = $stmt->rowCount();
 
     if ($num > 0) {
@@ -66,15 +75,21 @@ if ($method == 'POST') {
         $bookings_arr["records"] = array();
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            extract($row);
+            $user_id = isset($row['user_id']) ? $row['user_id'] : null;
+            $place_id = isset($row['place_id']) ? $row['place_id'] : null;
+            $payment_proof = isset($row['payment_proof']) ? $row['payment_proof'] : null;
+            $created_at = isset($row['created_at']) ? $row['created_at'] : null;
+            $updated_at = isset($row['updated_at']) ? $row['updated_at'] : null;
+            $status = isset($row['status']) ? $row['status'] : null;
+
             $booking_item = array(
-                "id" => $id,
+                "id" => $row['id'],
                 "user_id" => $user_id,
                 "place_id" => $place_id,
-                "booking_date" => $booking_date,
-                "number_of_people" => $number_of_people,
-                "status_id" => $status_id,
-                "total_price" => $total_price,
+                "booking_date" => $row['booking_date'],
+                "number_of_people" => $row['number_of_people'],
+                "total_price" => $row['total_price'],
+                "status" => $status,
                 "payment_proof" => $payment_proof,
                 "created_at" => $created_at,
                 "updated_at" => $updated_at

@@ -13,6 +13,7 @@ class Booking {
     public $payment_proof;
     public $created_at;
     public $updated_at;
+    public $status;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -48,11 +49,56 @@ class Booking {
         return false;
     }
 
-    public function read() {
-        $query = "SELECT * FROM " . $this->table_name;
+    public function readByUser() {
+        $query = "SELECT b.id, p.name as place_name, b.booking_date, p.address, b.number_of_people, b.total_price, s.name as status, p.photo
+                  FROM " . $this->table_name . " b
+                  JOIN places p ON b.place_id = p.id
+                  JOIN statuses s ON b.status_id = s.id
+                  WHERE b.user_id = ?
+                  ORDER BY b.booking_date DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->user_id);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function readByPlace() {
+        $query = "SELECT b.id, u.name as user_name, b.booking_date, b.number_of_people, b.total_price, s.name as status, b.payment_proof
+                  FROM " . $this->table_name . " b
+                  JOIN users u ON b.user_id = u.id
+                  JOIN statuses s ON b.status_id = s.id
+                  WHERE b.place_id = ?
+                  ORDER BY b.booking_date DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->place_id);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function readAll() {
+        $query = "SELECT b.id, b.user_id, b.place_id, b.booking_date, b.number_of_people, b.total_price, s.name as status, b.payment_proof, b.created_at, b.updated_at
+                  FROM " . $this->table_name . " b
+                  LEFT JOIN statuses s ON b.status_id = s.id
+                  ORDER BY b.booking_date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
+    }
+
+    public function updateStatus() {
+        $query = "UPDATE " . $this->table_name . " SET status_id = (SELECT id FROM statuses WHERE name = :status) WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->id = htmlspecialchars(strip_tags($this->id));
+
+        $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":id", $this->id);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
     }
 }
 ?>
