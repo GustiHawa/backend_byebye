@@ -11,6 +11,9 @@ class Place {
     public $price;
     public $photo;
     public $user_id;
+    public $campus_id;
+    public $account_number;
+    public $status;
     public $created_at;
     public $updated_at;
 
@@ -19,7 +22,7 @@ class Place {
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " SET name=:name, address=:address, facilities=:facilities, capacity=:capacity, price=:price, photo=:photo, user_id=:user_id, created_at=:created_at, updated_at=:updated_at";
+        $query = "INSERT INTO " . $this->table_name . " SET name=:name, address=:address, facilities=:facilities, capacity=:capacity, price=:price, photo=:photo, user_id=:user_id, campus_id=:campus_id, account_number=:account_number, status='Pending', created_at=:created_at, updated_at=:updated_at";
         $stmt = $this->conn->prepare($query);
 
         $this->name = htmlspecialchars(strip_tags($this->name));
@@ -29,6 +32,8 @@ class Place {
         $this->price = htmlspecialchars(strip_tags($this->price));
         $this->photo = htmlspecialchars(strip_tags($this->photo));
         $this->user_id = htmlspecialchars(strip_tags($this->user_id));
+        $this->campus_id = htmlspecialchars(strip_tags($this->campus_id));
+        $this->account_number = htmlspecialchars(strip_tags($this->account_number));
         $this->created_at = htmlspecialchars(strip_tags($this->created_at));
         $this->updated_at = htmlspecialchars(strip_tags($this->updated_at));
 
@@ -39,18 +44,30 @@ class Place {
         $stmt->bindParam(":price", $this->price);
         $stmt->bindParam(":photo", $this->photo);
         $stmt->bindParam(":user_id", $this->user_id);
+        $stmt->bindParam(":campus_id", $this->campus_id);
+        $stmt->bindParam(":account_number", $this->account_number);
         $stmt->bindParam(":created_at", $this->created_at);
         $stmt->bindParam(":updated_at", $this->updated_at);
 
         if ($stmt->execute()) {
             return true;
         }
+
+        error_log("Error executing query: " . $stmt->errorInfo()[2]); // Debugging
         return false;
     }
 
     public function read() {
-        $query = "SELECT * FROM " . $this->table_name;
+        $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function readByCampus() {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE campus_id = :campus_id ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":campus_id", $this->campus_id);
         $stmt->execute();
         return $stmt;
     }
@@ -58,7 +75,6 @@ class Place {
     public function readOne() {
         $query = "SELECT * FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
         $stmt = $this->conn->prepare($query);
-
         $stmt->bindParam(1, $this->id);
         $stmt->execute();
 
@@ -72,11 +88,28 @@ class Place {
             $this->price = $row['price'];
             $this->photo = $row['photo'];
             $this->user_id = $row['user_id'];
+            $this->campus_id = $row['campus_id'];
+            $this->account_number = $row['account_number'];
+            $this->status = $row['status'];
             $this->created_at = $row['created_at'];
             $this->updated_at = $row['updated_at'];
-        } else {
-            $this->name = null;
         }
+    }
+
+    public function updateStatus() {
+        $query = "UPDATE " . $this->table_name . " SET status = :status WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->id = htmlspecialchars(strip_tags($this->id));
+
+        $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":id", $this->id);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
     }
 }
 ?>

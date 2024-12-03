@@ -76,26 +76,24 @@ if ($method == 'POST') {
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $user_id = isset($row['user_id']) ? $row['user_id'] : null;
-            $place_id = isset($row['place_id']) ? $row['place_id'] : null;
-            $payment_proof = isset($row['payment_proof']) ? $row['payment_proof'] : null;
-            $created_at = isset($row['created_at']) ? $row['created_at'] : null;
-            $updated_at = isset($row['updated_at']) ? $row['updated_at'] : null;
-            $status = isset($row['status']) ? $row['status'] : null;
+            extract($row);
 
             $booking_item = array(
-                "id" => $row['id'],
+                "id" => $id,
                 "user_id" => $user_id,
                 "place_id" => $place_id,
-                "booking_date" => $row['booking_date'],
-                "number_of_people" => $row['number_of_people'],
-                "total_price" => $row['total_price'],
+                "booking_date" => $booking_date,
+                "number_of_people" => $number_of_people,
+                "total_price" => $total_price,
                 "status" => $status,
                 "payment_proof" => $payment_proof,
                 "created_at" => $created_at,
                 "updated_at" => $updated_at
             );
+
             array_push($bookings_arr["records"], $booking_item);
         }
+
         http_response_code(200);
         echo json_encode($bookings_arr);
     } else {

@@ -19,7 +19,12 @@ $db = $database->getConnection();
 $place = new Place($db);
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $place->read();
+    if (isset($_GET['campus_id'])) {
+        $place->campus_id = $_GET['campus_id'];
+        $stmt = $place->readByCampus();
+    } else {
+        $stmt = $place->read();
+    }
     $num = $stmt->rowCount();
 
     if ($num > 0) {
@@ -37,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 "price" => $price,
                 "photo" => $photo,
                 "user_id" => $user_id,
+                "campus_id" => $campus_id,
                 "created_at" => $created_at,
                 "updated_at" => $updated_at
             );
@@ -63,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $place->price = $data->price;
         $place->photo = $data->photo;
         $place->user_id = $data->user_id;
+        $place->campus_id = $data->campus_id;
         $place->created_at = date('Y-m-d H:i:s');
         $place->updated_at = date('Y-m-d H:i:s');
 
@@ -81,4 +88,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     http_response_code(405);
     echo json_encode(array("message" => "Method not allowed."));
 }
-?>
+?>uggui

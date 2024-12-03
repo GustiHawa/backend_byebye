@@ -13,7 +13,6 @@ class Booking {
     public $payment_proof;
     public $created_at;
     public $updated_at;
-    public $status;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -46,6 +45,8 @@ class Booking {
         if ($stmt->execute()) {
             return true;
         }
+
+        error_log("Error executing query: " . $stmt->errorInfo()[2]); // Debugging
         return false;
     }
 
@@ -86,13 +87,13 @@ class Booking {
     }
 
     public function updateStatus() {
-        $query = "UPDATE " . $this->table_name . " SET status_id = (SELECT id FROM statuses WHERE name = :status) WHERE id = :id";
+        $query = "UPDATE " . $this->table_name . " SET status_id = :status_id WHERE id = :id";
         $stmt = $this->conn->prepare($query);
 
-        $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->status_id = htmlspecialchars(strip_tags($this->status_id));
         $this->id = htmlspecialchars(strip_tags($this->id));
 
-        $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":status_id", $this->status_id);
         $stmt->bindParam(":id", $this->id);
 
         if ($stmt->execute()) {

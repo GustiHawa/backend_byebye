@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             "price" => $place->price,
             "photo" => $place->photo,
             "user_id" => $place->user_id,
+            "campus_id" => $place->campus_id,
             "created_at" => $place->created_at,
             "updated_at" => $place->updated_at
         );

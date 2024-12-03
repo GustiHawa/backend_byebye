@@ -20,9 +20,12 @@ $booking = new Booking($db);
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (!empty($data->id) && !empty($data->status)) {
+// Tambahkan logging untuk debugging
+error_log("Data received: " . print_r($data, true));
+
+if (!empty($data->id) && !empty($data->status_id)) {
     $booking->id = $data->id;
-    $booking->status = $data->status;
+    $booking->status_id = $data->status_id;
 
     if ($booking->updateStatus()) {
         http_response_code(200);
@@ -32,6 +35,11 @@ if (!empty($data->id) && !empty($data->status)) {
         echo json_encode(array("message" => "Unable to update booking status."));
     }
 } else {
+    // Tambahkan logging untuk parameter yang hilang
+    error_log("Missing parameters: " . 
+        (empty($data->id) ? "id " : "") .
+        (empty($data->status_id) ? "status_id " : "")
+    );
     http_response_code(400);
     echo json_encode(array("message" => "Unable to update booking status. Data is incomplete."));
 }
