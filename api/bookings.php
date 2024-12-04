@@ -23,8 +23,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method == 'POST') {
     $data = json_decode(file_get_contents("php://input"));
 
-    error_log("Data received: " . print_r($data, true)); // Debugging
-
+    // Validasi input
     if (
         !empty($data->user_id) &&
         !empty($data->place_id) &&
@@ -53,19 +52,33 @@ if ($method == 'POST') {
             echo json_encode(array("message" => "Unable to create booking."));
         }
     } else {
-        error_log("Incomplete data: " . print_r($data, true)); // Debugging
+        // Tambahkan logging untuk parameter yang hilang
+        error_log("Missing parameters: " . 
+            (empty($data->user_id) ? "user_id " : "") .
+            (empty($data->place_id) ? "place_id " : "") .
+            (empty($data->booking_date) ? "booking_date " : "") .
+            (empty($data->number_of_people) ? "number_of_people " : "") .
+            (empty($data->status_id) ? "status_id " : "") .
+            (empty($data->total_price) ? "total_price " : "") .
+            (empty($data->payment_proof) ? "payment_proof " : "")
+        );
         http_response_code(400);
         echo json_encode(array("message" => "Unable to create booking. Data is incomplete."));
     }
 } elseif ($method == 'GET') {
+    // Mendukung pagination
+    $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $offset = ($page - 1) * $limit;
+
     if (isset($_GET['user_id'])) {
-        $booking->user_id = $_GET['user_id'];
-        $stmt = $booking->readByUser();
+        $booking->user_id = intval($_GET['user_id']);
+        $stmt = $booking->readByUser($limit, $offset);
     } elseif (isset($_GET['place_id'])) {
-        $booking->place_id = $_GET['place_id'];
-        $stmt = $booking->readByPlace();
+        $booking->place_id = intval($_GET['place_id']);
+        $stmt = $booking->readByPlace($limit, $offset);
     } else {
-        $stmt = $booking->readAll();
+        $stmt = $booking->readAll($limit, $offset);
     }
 
     $num = $stmt->rowCount();

@@ -11,36 +11,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 include_once '../config/database.php';
-include_once '../models/Booking.php';
+include_once '../models/Place.php';
+
+// Debugging tambahan untuk memastikan file terhubung
+if (!class_exists('Place')) {
+    die('Class Place not found!');
+}
 
 $database = new Database();
 $db = $database->getConnection();
 
-$booking = new Booking($db);
+$place = new Place($db);
 
 $data = json_decode(file_get_contents("php://input"));
 
-// Tambahkan logging untuk debugging
-error_log("Data received: " . print_r($data, true));
+if (!empty($data->id) && !empty($data->status)) {
+    $place->id = $data->id;
+    $place->status = $data->status;
 
-if (!empty($data->id) && !empty($data->status_id)) {
-    $booking->id = $data->id;
-    $booking->status_id = $data->status_id;
-
-    if ($booking->updateStatus()) {
+    if ($place->updateStatus()) {
         http_response_code(200);
-        echo json_encode(array("message" => "Booking status updated."));
+        echo json_encode(array("message" => "Place status updated."));
     } else {
         http_response_code(503);
-        echo json_encode(array("message" => "Unable to update booking status."));
+        echo json_encode(array("message" => "Unable to update place status."));
     }
 } else {
-    // Tambahkan logging untuk parameter yang hilang
-    error_log("Missing parameters: " . 
-        (empty($data->id) ? "id " : "") .
-        (empty($data->status_id) ? "status_id " : "")
-    );
     http_response_code(400);
-    echo json_encode(array("message" => "Unable to update booking status. Data is incomplete."));
+    echo json_encode(array("message" => "Unable to update place status. Data is incomplete."));
 }
 ?>

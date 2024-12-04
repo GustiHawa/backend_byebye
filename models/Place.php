@@ -96,6 +96,21 @@ class Place {
         }
     }
 
+    public function readAll($search = null) {
+        $query = "SELECT * FROM " . $this->table_name;
+        if ($search) {
+            $query .= " WHERE name LIKE :search OR address LIKE :search OR facilities LIKE :search";
+        }
+        $query .= " ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        if ($search) {
+            $search = "%{$search}%";
+            $stmt->bindParam(":search", $search);
+        }
+        $stmt->execute();
+        return $stmt;
+    }
+
     public function updateStatus() {
         $query = "UPDATE " . $this->table_name . " SET status = :status WHERE id = :id";
         $stmt = $this->conn->prepare($query);

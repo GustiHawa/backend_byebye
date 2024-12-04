@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $place->campus_id = $_GET['campus_id'];
         $stmt = $place->readByCampus();
     } else {
-        $stmt = $place->read();
+        $stmt = $place->readAll();
     }
     $num = $stmt->rowCount();
 
@@ -54,38 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         http_response_code(404);
         echo json_encode(array("message" => "No places found."));
     }
-} else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents("php://input"));
-
-    if (
-        !empty($data->name) &&
-        !empty($data->address) &&
-        !empty($data->user_id)
-    ) {
-        $place->name = $data->name;
-        $place->address = $data->address;
-        $place->facilities = $data->facilities;
-        $place->capacity = $data->capacity;
-        $place->price = $data->price;
-        $place->photo = $data->photo;
-        $place->user_id = $data->user_id;
-        $place->campus_id = $data->campus_id;
-        $place->created_at = date('Y-m-d H:i:s');
-        $place->updated_at = date('Y-m-d H:i:s');
-
-        if ($place->create()) {
-            http_response_code(201);
-            echo json_encode(array("message" => "Place was created."));
-        } else {
-            http_response_code(503);
-            echo json_encode(array("message" => "Unable to create place."));
-        }
-    } else {
-        http_response_code(400);
-        echo json_encode(array("message" => "Unable to create place. Data is incomplete."));
-    }
 } else {
     http_response_code(405);
     echo json_encode(array("message" => "Method not allowed."));
 }
-?>uggui
+?>

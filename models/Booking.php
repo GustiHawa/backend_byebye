@@ -3,6 +3,7 @@ class Booking {
     private $conn;
     private $table_name = "bookings";
 
+    // Properti Booking
     public $id;
     public $user_id;
     public $place_id;
@@ -14,24 +15,27 @@ class Booking {
     public $created_at;
     public $updated_at;
 
+    // Konstruktor
     public function __construct($db) {
         $this->conn = $db;
     }
 
+    /**
+     * Fungsi untuk membuat booking baru
+     */
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " SET user_id=:user_id, place_id=:place_id, booking_date=:booking_date, number_of_people=:number_of_people, status_id=:status_id, total_price=:total_price, payment_proof=:payment_proof, created_at=:created_at, updated_at=:updated_at";
+        $query = "INSERT INTO " . $this->table_name . " 
+                  SET user_id = :user_id, place_id = :place_id, booking_date = :booking_date, 
+                      number_of_people = :number_of_people, status_id = :status_id, 
+                      total_price = :total_price, payment_proof = :payment_proof, 
+                      created_at = :created_at, updated_at = :updated_at";
+
         $stmt = $this->conn->prepare($query);
 
-        $this->user_id = htmlspecialchars(strip_tags($this->user_id));
-        $this->place_id = htmlspecialchars(strip_tags($this->place_id));
-        $this->booking_date = htmlspecialchars(strip_tags($this->booking_date));
-        $this->number_of_people = htmlspecialchars(strip_tags($this->number_of_people));
-        $this->status_id = htmlspecialchars(strip_tags($this->status_id));
-        $this->total_price = htmlspecialchars(strip_tags($this->total_price));
-        $this->payment_proof = htmlspecialchars(strip_tags($this->payment_proof));
-        $this->created_at = htmlspecialchars(strip_tags($this->created_at));
-        $this->updated_at = htmlspecialchars(strip_tags($this->updated_at));
+        // Sanitasi data
+        $this->sanitizeProperties();
 
+        // Bind parameter
         $stmt->bindParam(":user_id", $this->user_id);
         $stmt->bindParam(":place_id", $this->place_id);
         $stmt->bindParam(":booking_date", $this->booking_date);
@@ -42,56 +46,88 @@ class Booking {
         $stmt->bindParam(":created_at", $this->created_at);
         $stmt->bindParam(":updated_at", $this->updated_at);
 
+        // Eksekusi query
         if ($stmt->execute()) {
             return true;
         }
 
-        error_log("Error executing query: " . $stmt->errorInfo()[2]); // Debugging
+        error_log("Error executing query: " . $stmt->errorInfo()[2]); // Log error
         return false;
     }
 
-    public function readByUser() {
-        $query = "SELECT b.id, p.name as place_name, b.booking_date, p.address, b.number_of_people, b.total_price, s.name as status, p.photo
+    /**
+     * Fungsi untuk membaca booking berdasarkan user
+     */
+    public function readByUser($limit, $offset) {
+        $query = "SELECT b.id, p.name as place_name, b.booking_date, p.address, b.number_of_people, 
+                         b.total_price, s.name as status, p.photo
                   FROM " . $this->table_name . " b
                   JOIN places p ON b.place_id = p.id
                   JOIN statuses s ON b.status_id = s.id
-                  WHERE b.user_id = ?
-                  ORDER BY b.booking_date DESC";
+                  WHERE b.user_id = :user_id
+                  ORDER BY b.booking_date DESC
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->user_id);
+        $stmt->bindParam(":user_id", $this->user_id, PDO::PARAM_INT);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+
         $stmt->execute();
         return $stmt;
     }
 
-    public function readByPlace() {
-        $query = "SELECT b.id, u.name as user_name, b.booking_date, b.number_of_people, b.total_price, s.name as status, b.payment_proof
+    /**
+     * Fungsi untuk membaca booking berdasarkan tempat
+     */
+    public function readByPlace($limit, $offset) {
+        $query = "SELECT b.id, u.name as user_name, b.booking_date, b.number_of_people, 
+                         b.total_price, s.name as status, b.payment_proof
                   FROM " . $this->table_name . " b
                   JOIN users u ON b.user_id = u.id
                   JOIN statuses s ON b.status_id = s.id
-                  WHERE b.place_id = ?
-                  ORDER BY b.booking_date DESC";
+                  WHERE b.place_id = :place_id
+                  ORDER BY b.booking_date DESC
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->place_id);
+        $stmt->bindParam(":place_id", $this->place_id, PDO::PARAM_INT);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+
         $stmt->execute();
         return $stmt;
     }
 
-    public function readAll() {
-        $query = "SELECT b.id, b.user_id, b.place_id, b.booking_date, b.number_of_people, b.total_price, s.name as status, b.payment_proof, b.created_at, b.updated_at
+    /**
+     * Fungsi untuk membaca semua booking
+     */
+    public function readAll($limit, $offset) {
+        $query = "SELECT b.id, b.user_id, b.place_id, b.booking_date, b.number_of_people, 
+                         b.total_price, s.name as status, b.payment_proof, b.created_at, b.updated_at
                   FROM " . $this->table_name . " b
                   LEFT JOIN statuses s ON b.status_id = s.id
-                  ORDER BY b.booking_date DESC";
+                  ORDER BY b.booking_date DESC
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+
         $stmt->execute();
         return $stmt;
     }
 
+    /**
+     * Fungsi untuk memperbarui status booking
+     */
     public function updateStatus() {
         $query = "UPDATE " . $this->table_name . " SET status_id = :status_id WHERE id = :id";
+
         $stmt = $this->conn->prepare($query);
 
-        $this->status_id = htmlspecialchars(strip_tags($this->status_id));
-        $this->id = htmlspecialchars(strip_tags($this->id));
+        // Sanitasi data
+        $this->sanitizeProperties(['status_id', 'id']);
 
         $stmt->bindParam(":status_id", $this->status_id);
         $stmt->bindParam(":id", $this->id);
@@ -99,7 +135,20 @@ class Booking {
         if ($stmt->execute()) {
             return true;
         }
+        error_log("Error updating status: " . $stmt->errorInfo()[2]); // Log error
         return false;
+    }
+
+    /**
+     * Sanitasi properti untuk menghindari data tidak aman
+     */
+    private function sanitizeProperties($fields = null) {
+        $properties = $fields ? $fields : get_object_vars($this);
+        foreach ($properties as $field) {
+            if (property_exists($this, $field)) {
+                $this->$field = htmlspecialchars(strip_tags($this->$field));
+            }
+        }
     }
 }
 ?>
