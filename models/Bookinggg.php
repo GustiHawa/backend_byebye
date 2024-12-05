@@ -33,7 +33,7 @@ class Booking {
         $stmt = $this->conn->prepare($query);
 
         // Sanitasi data
-        $this->sanitizeProperties(['user_id', 'place_id', 'booking_date', 'number_of_people', 'status_id', 'total_price', 'payment_proof', 'created_at', 'updated_at']);
+        $this->sanitizeProperties();
 
         // Bind parameter
         $stmt->bindParam(":user_id", $this->user_id);
@@ -53,6 +53,18 @@ class Booking {
 
         error_log("Error executing query: " . $stmt->errorInfo()[2]); // Log error
         return false;
+    }
+
+    /**
+     * Sanitasi properti untuk menghindari data tidak aman
+     */
+    private function sanitizeProperties($fields = null) {
+        $properties = $fields ? $fields : get_object_vars($this);
+        foreach ($properties as $field) {
+            if (property_exists($this, $field)) {
+                $this->$field = htmlspecialchars(strip_tags($this->$field));
+            }
+        }
     }
 
     /**
@@ -116,39 +128,6 @@ class Booking {
 
         $stmt->execute();
         return $stmt;
-    }
-
-    /**
-     * Fungsi untuk memperbarui status booking
-     */
-    public function updateStatus() {
-        $query = "UPDATE " . $this->table_name . " SET status_id = :status_id WHERE id = :id";
-
-        $stmt = $this->conn->prepare($query);
-
-        // Sanitasi data
-        $this->sanitizeProperties(['status_id', 'id']);
-
-        $stmt->bindParam(":status_id", $this->status_id);
-        $stmt->bindParam(":id", $this->id);
-
-        if ($stmt->execute()) {
-            return true;
-        }
-        error_log("Error updating status: " . $stmt->errorInfo()[2]); // Log error
-        return false;
-    }
-
-    /**
-     * Sanitasi properti untuk menghindari data tidak aman
-     */
-    private function sanitizeProperties($fields = null) {
-        $properties = $fields ? $fields : get_object_vars($this);
-        foreach ($properties as $field) {
-            if (is_string($field) && property_exists($this, $field)) {
-                $this->$field = htmlspecialchars(strip_tags($this->$field));
-            }
-        }
     }
 }
 ?>

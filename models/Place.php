@@ -111,6 +111,20 @@ class Place {
         return $stmt;
     }
 
+    public function readPending() {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE status = 'Pending' ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function readApproved() {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE status = 'Approved' ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
     public function updateStatus() {
         $query = "UPDATE " . $this->table_name . " SET status = :status WHERE id = :id";
         $stmt = $this->conn->prepare($query);
